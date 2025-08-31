@@ -1,21 +1,37 @@
--- Database initialization script
--- Create database and table structures
+-- Required extensions
+CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- for gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS citext;    -- case-insensitive text for domain
 
--- Create database (if not exists)
--- CREATE DATABASE IF NOT EXISTS uni_tracker;
+-- =========================================
+-- Universities (global baseline)
+-- =========================================
+CREATE TABLE public.universities (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),      -- unique identifier
+  name             TEXT NOT NULL,                                   -- university name
+  country_code     CHAR(2) NOT NULL,                                -- ISO 3166-1 alpha-2 (e.g., US/GB/AU)
+  state_province   TEXT,                                            -- state/province (nullable)
+  city             TEXT,                                            -- city (nullable)
+  website          TEXT,                                            -- full website URL (e.g., https://www.harvard.edu/)
+  domain           CITEXT UNIQUE,                                   -- canonical primary domain (e.g., harvard.edu), nullable unique
+  aliases          TEXT[] DEFAULT '{}'::TEXT[],                     -- alternative names/abbreviations
+  external_ids     JSONB  DEFAULT '{}'::JSONB,                      -- external IDs (e.g., {"openalex":"...","ror":"...","scorecard":"..."})
+  apply_portals    JSONB  DEFAULT '[]'::JSONB,                      -- application portals (e.g., [{"type":"common_app","url":"..."}])
+  created_at       TIMESTAMPTZ DEFAULT NOW(),                       -- creation timestamp
+  updated_at       TIMESTAMPTZ DEFAULT NOW()                        -- last update timestamp (maintained by trigger below)
+);
 
--- Use database
--- USE uni_tracker;
+-- Trigger function to automatically update updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
--- Add table creation statements here
--- Example:
--- CREATE TABLE IF NOT EXISTS users (
---     id INT AUTO_INCREMENT PRIMARY KEY,
---     username VARCHAR(255) NOT NULL UNIQUE,
---     email VARCHAR(255) NOT NULL UNIQUE,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+-- Trigger to automatically update updated_at on universities table
+CREATE TRIGGER update_universities_updated_at 
+    BEFORE UPDATE ON public.universities 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
--- Add indexes
--- CREATE INDEX idx_users_username ON users(username);
--- CREATE INDEX idx_users_email ON users(email);
