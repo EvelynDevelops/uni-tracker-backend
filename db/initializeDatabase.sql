@@ -1,6 +1,8 @@
 -- Required extensions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- for gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS citext;    -- case-insensitive text for domain
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 
 -- =========================================
 -- Universities (global baseline)
@@ -35,3 +37,7 @@ CREATE TRIGGER update_universities_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+CREATE INDEX IF NOT EXISTS idx_universities_country_code ON public.universities(country_code);
+CREATE INDEX IF NOT EXISTS idx_universities_created_at ON public.universities(created_at);
+CREATE INDEX IF NOT EXISTS gin_universities_name_trgm ON public.universities USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_universities_domain ON public.universities(domain);
