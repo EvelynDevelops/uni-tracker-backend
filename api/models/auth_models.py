@@ -7,6 +7,7 @@ class UserSignUpRequest(BaseModel):
     password: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    role: str = "student"  # Default role is student
 
 class UserSignInRequest(BaseModel):
     """User login request model"""
@@ -19,6 +20,7 @@ class UserResponse(BaseModel):
     email: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    role: Optional[str] = None
     created_at: str
     updated_at: str
 

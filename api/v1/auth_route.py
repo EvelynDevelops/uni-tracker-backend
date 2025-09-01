@@ -39,7 +39,8 @@ async def sign_up(user_data: UserSignUpRequest):
             email=user_data.email,
             password=user_data.password,
             first_name=user_data.first_name,
-            last_name=user_data.last_name
+            last_name=user_data.last_name,
+            role=user_data.role
         )
         
         return AuthResponse(
