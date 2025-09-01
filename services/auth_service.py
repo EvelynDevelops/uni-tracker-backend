@@ -81,8 +81,8 @@ class AuthService:
                         "first_name": first_name,
                         "last_name": last_name,
                         "role": role,
-                        "created_at": response.user.created_at,
-                        "updated_at": response.user.updated_at
+                        "created_at": str(response.user.created_at) if response.user.created_at else None,
+                        "updated_at": str(response.user.updated_at) if response.user.updated_at else None
                     },
                     "access_token": response.session.access_token if response.session else None,
                     "refresh_token": response.session.refresh_token if response.session else None
@@ -126,8 +126,8 @@ class AuthService:
                         "first_name": response.user.user_metadata.get("first_name"),
                         "last_name": response.user.user_metadata.get("last_name"),
                         "role": role,
-                        "created_at": response.user.created_at,
-                        "updated_at": response.user.updated_at
+                        "created_at": str(response.user.created_at) if response.user.created_at else None,
+                        "updated_at": str(response.user.updated_at) if response.user.updated_at else None
                     },
                     "access_token": response.session.access_token,
                     "refresh_token": response.session.refresh_token
@@ -182,8 +182,8 @@ class AuthService:
                         "first_name": response.user.user_metadata.get("first_name"),
                         "last_name": response.user.user_metadata.get("last_name"),
                         "role": role,
-                        "created_at": response.user.created_at,
-                        "updated_at": response.user.updated_at
+                        "created_at": str(response.user.created_at) if response.user.created_at else None,
+                        "updated_at": str(response.user.updated_at) if response.user.updated_at else None
                     },
                     "access_token": response.session.access_token,
                     "refresh_token": response.session.refresh_token
@@ -284,8 +284,8 @@ class AuthService:
                     "email": response.user.email,
                     "first_name": response.user.user_metadata.get("first_name"),
                     "last_name": response.user.user_metadata.get("last_name"),
-                    "created_at": response.user.created_at,
-                    "updated_at": response.user.updated_at
+                    "created_at": str(response.user.created_at) if response.user.created_at else None,
+                    "updated_at": str(response.user.updated_at) if response.user.updated_at else None
                 }
             else:
                 raise HTTPException(
@@ -326,8 +326,8 @@ class AuthService:
                     "first_name": user.user.user_metadata.get("first_name"),
                     "last_name": user.user.user_metadata.get("last_name"),
                     "role": role,
-                    "created_at": user.user.created_at,
-                    "updated_at": user.user.updated_at
+                    "created_at": str(user.user.created_at) if user.user.created_at else None,
+                    "updated_at": str(user.user.updated_at) if user.user.updated_at else None
                 }
             else:
                 raise HTTPException(
