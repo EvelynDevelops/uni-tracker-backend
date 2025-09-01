@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
 
-from models.auth_models import (
+from ..models.auth_models import (
     UserSignUpRequest, UserSignInRequest, UserResponse, AuthResponse,
     RefreshTokenRequest, PasswordResetRequest, PasswordUpdateRequest,
     UserProfileUpdateRequest
