@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.v1.universities.route import router as universities_router
+from api.v1.auth_route import router as auth_router
 
 app = FastAPI(
     title="Uni Tracker Backend",
@@ -11,14 +11,14 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact domains
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(universities_router)
+app.include_router(auth_router)
 
 @app.get("/")
 async def root():
