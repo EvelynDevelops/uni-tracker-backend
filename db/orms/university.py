@@ -43,36 +43,21 @@ class UniversityCRUD:
     )
 
     @classmethod
-    def fetch_university_ids(cls):
-        """
-        Fetches all university id values from the database using ORM.
-        :return: List[str] - university ids ordered as in the database.
-        """
+    def get_all_universities(cls):
+        """Get all universities with basic filtering."""
         try:
             with cls.db_manager.get_session() as session:
-                university_ids = session.query(University.id).order_by(University.id).all()
-                return [str(row[0]) for row in university_ids]
+                return session.query(University).filter(
+                    University.name.isnot(None),
+                    University.name != ""
+                ).all()
         except SQLAlchemyError as e:
-            logger.error(f"UniversityCRUD fetch_university_ids error: {e}")
-            raise
-
-    @classmethod
-    def add_university(cls, university_data):
-        """Insert a new university."""
-        try:
-            with cls.db_manager.get_session() as session:
-                new_university = University(**university_data)
-                session.add(new_university)
-                session.commit()
-                return new_university
-        except SQLAlchemyError as e:
-            session.rollback()
-            logger.error(f"UniversityCRUD add_university error: {e}")
+            logger.error(f"UniversityCRUD get_all_universities error: {e}")
             raise
 
     @classmethod
     def get_university_by_id(cls, university_id):
-        """Fetch a university by id."""
+        """Get a university by ID."""
         try:
             with cls.db_manager.get_session() as session:
                 return session.query(University).filter(University.id == university_id).first()
@@ -81,58 +66,35 @@ class UniversityCRUD:
             raise
 
     @classmethod
-    def get_university_by_domain(cls, domain):
-        """Fetch a university by domain."""
+    def search_universities(cls, search_term, country_code=None, limit=20):
+        """
+        Search universities by name with optional country filter.
+        
+        Args:
+            search_term (str): Search term for university name
+            country_code (str): Optional country filter
+            limit (int): Maximum number of results
+            
+        Returns:
+            List[University]: List of matching universities
+        """
         try:
             with cls.db_manager.get_session() as session:
-                return session.query(University).filter(University.domain == domain).first()
-        except SQLAlchemyError as e:
-            logger.error(f"UniversityCRUD get_university_by_domain error: {e}")
-            raise
-
-    @classmethod
-    def get_university_by_name_and_country(cls, name, country_code):
-        """Fetch a university by name and country code (case insensitive)."""
-        try:
-            with cls.db_manager.get_session() as session:
-                return session.query(University).filter(
-                    func.lower(University.name) == func.lower(name),
-                    University.country_code == country_code
-                ).first()
-        except SQLAlchemyError as e:
-            logger.error(f"UniversityCRUD get_university_by_name_and_country error: {e}")
-            raise
-
-    @classmethod
-    def get_universities_by_ids(cls, university_ids):
-        """Fetch multiple universities by a list of university ids."""
-        try:
-            if isinstance(university_ids, list):
-                university_ids = tuple(university_ids)
-
-            with cls.db_manager.get_session() as session:
-                universities = (
-                    session.query(University.id, University.name, University.country_code, University.domain)
-                    .filter(University.id.in_(university_ids))
-                    .all()
+                query = session.query(University).filter(
+                    func.lower(University.name).contains(func.lower(search_term))
                 )
-
-                universities_dict = {
-                    str(u.id): {
-                        "name": u.name, 
-                        "country_code": u.country_code, 
-                        "domain": u.domain
-                    } for u in universities
-                }
-                return universities_dict
-
+                
+                if country_code:
+                    query = query.filter(University.country_code == country_code)
+                
+                return query.limit(limit).all()
         except SQLAlchemyError as e:
-            logger.error(f"UniversityCRUD get_universities_by_ids error: {e}")
+            logger.error(f"UniversityCRUD search_universities error: {e}")
             raise
 
     @classmethod
     def get_universities_by_country(cls, country_code):
-        """Fetch all universities by country code."""
+        """Get all universities in a specific country."""
         try:
             with cls.db_manager.get_session() as session:
                 return session.query(University).filter(University.country_code == country_code).all()
@@ -141,87 +103,9 @@ class UniversityCRUD:
             raise
 
     @classmethod
-    def get_universities_by_type(cls, university_type=None):
-        """Fetch all universities, optionally filtered by type (placeholder for future use)."""
-        try:
-            with cls.db_manager.get_session() as session:
-                if university_type:
-                    # Placeholder for future filtering logic
-                    return session.query(University).filter(University.name.contains(university_type)).all()
-                else:
-                    return session.query(University).all()
-        except SQLAlchemyError as e:
-            logger.error(f"UniversityCRUD get_universities_by_type error: {e}")
-            raise
-
-    @classmethod
-    def get_all_universities(cls):
-        """Fetch all universities excluding timestamps, ensuring name is not null or empty."""
-        try:
-            with cls.db_manager.get_session() as session:
-                universities = session.query(
-                    University.id,
-                    University.name,
-                    University.country_code,
-                    University.state_province,
-                    University.city,
-                    University.website,
-                    University.domain,
-                    University.aliases,
-                    University.external_ids,
-                    University.apply_portals
-                ).filter(
-                    University.name.isnot(None),
-                    University.name != ""
-                ).all()
-                
-                return universities
-        except SQLAlchemyError as e:
-            logger.error(f"UniversityCRUD get_all_universities error: {e}")
-            raise
-
-    @classmethod
-    def update_university(cls, university_id, update_data):
-        """Update a university's details."""
-        try:
-            with cls.db_manager.get_session() as session:
-                university = session.query(University).filter(University.id == university_id).first()
-                if not university:
-                    return None
-                
-                for key, value in update_data.items():
-                    if hasattr(university, key):
-                        setattr(university, key, value)
-                
-                university.updated_at = datetime.utcnow()
-                session.commit()
-                return university
-        except SQLAlchemyError as e:
-            session.rollback()
-            logger.error(f"UniversityCRUD update_university error: {e}")
-            raise
-
-    @classmethod
-    def delete_university(cls, university_id):
-        """Delete a university by id."""
-        try:
-            with cls.db_manager.get_session() as session:
-                university = session.query(University).filter(University.id == university_id).first()
-                if not university:
-                    return None
-                
-                session.delete(university)
-                session.commit()
-                return university_id
-        except SQLAlchemyError as e:
-            session.rollback()
-            logger.error(f"UniversityCRUD delete_university error: {e}")
-            raise
-
-    @classmethod
     def create_or_update_university(cls, university_data):
         """
-        Create a new university or update existing one based on domain or name+country_code.
+        Create a new university or update existing one.
         This is the main method for upsert operations.
         """
         try:
@@ -264,14 +148,50 @@ class UniversityCRUD:
             raise
 
     @classmethod
-    def search_universities(cls, search_term, limit=10):
-        """Search universities by name (case insensitive)."""
+    def update_university(cls, university_id, update_data):
+        """Update a university's details."""
         try:
             with cls.db_manager.get_session() as session:
-                universities = session.query(University).filter(
-                    func.lower(University.name).contains(func.lower(search_term))
-                ).limit(limit).all()
-                return universities
+                university = session.query(University).filter(University.id == university_id).first()
+                if not university:
+                    return None
+                
+                for key, value in update_data.items():
+                    if hasattr(university, key):
+                        setattr(university, key, value)
+                
+                university.updated_at = datetime.utcnow()
+                session.commit()
+                return university
         except SQLAlchemyError as e:
-            logger.error(f"UniversityCRUD search_universities error: {e}")
+            session.rollback()
+            logger.error(f"UniversityCRUD update_university error: {e}")
+            raise
+
+    @classmethod
+    def delete_university(cls, university_id):
+        """Delete a university by ID."""
+        try:
+            with cls.db_manager.get_session() as session:
+                university = session.query(University).filter(University.id == university_id).first()
+                if not university:
+                    return None
+                
+                session.delete(university)
+                session.commit()
+                return university_id
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"UniversityCRUD delete_university error: {e}")
+            raise
+
+    @classmethod
+    def get_countries_with_universities(cls):
+        """Get list of countries that have universities."""
+        try:
+            with cls.db_manager.get_session() as session:
+                countries = session.query(University.country_code).distinct().all()
+                return [country[0] for country in countries]
+        except SQLAlchemyError as e:
+            logger.error(f"UniversityCRUD get_countries_with_universities error: {e}")
             raise
